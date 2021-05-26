@@ -9,7 +9,7 @@ require("dotenv").config();
 const Dealer = require("./Modals/Dealer.modal");
 const Order = require("./Modals/Order.modal");
 //*Utils
-const sendEmail = require("./Routes/sendEmail");
+
 const allDealers = require('./Routes/allDealers.routes');
 const updateDealers = require('./Routes/updateDealers.routes');
 const app = express();
