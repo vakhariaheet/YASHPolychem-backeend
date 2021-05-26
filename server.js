@@ -106,7 +106,7 @@ app.delete("/dealers/:id", async (req, res) => {
     res.sendStatus(500)
   }
 })
-const port = 5000 || process.env.PORT;
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log("listening on port " + port);
 });
