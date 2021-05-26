@@ -23,7 +23,6 @@ mongoose.connect(process.env.MONGODB_URL, {
   useCreateIndex: true,
   useFindAndModify: false,
 });
-const dealersR = [];
 app.post("/upload", async (req, res) => {
   const { binaryString } = req.body;
   const workbook = XLSX.read(binaryString, { type: "binary" });
@@ -57,17 +56,11 @@ app.post("/upload", async (req, res) => {
     orderProperty.map((orderName) => {
       order[orderName] = dat[orderName];
     });
-
-    dealersR.push({
-      id: dat.Code,
-      name: dat.Name_1,
-      email: "heet1476@gmail.com"
-    });
     orders.push(order);
   });
 
    Order.insertMany(orders);
-    //  Dealer.insertMany(dealersR.filter(v => v.id && v.name));
+   
   const dealers = await Dealer.find();
   dealers.map(async (dealer,i) => {
     
@@ -98,17 +91,20 @@ app.get("/dealers/:id",async (req,res) => {
   const dealer = await Dealer.find({ id });
   res.json(dealer[0]);
 })
+app.post("/add/dealer", async (req, res) => {
+  const { dealer } = req.body;
+  
+  const newDealer = await Dealer.create(dealer);
+  res.sendStatus(200);
+})
 app.delete("/dealers/:id", async (req, res) => {
   const { id } = req.params;
   try {
     await Dealer.findByIdAndRemove(id);
     res.sendStatus(200)
   } catch (error) {
-    console.log(error);
     res.sendStatus(500)
   }
- 
-  
 })
 const port = 5000 || process.env.PORT;
 app.listen(port, () => {
