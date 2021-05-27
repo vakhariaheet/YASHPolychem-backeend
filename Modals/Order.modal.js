@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
 const orderSchema = mongoose.Schema({
   "Order No": Number,
-  "Doc. No": Number,
+  "Doc. No": {
+    type: Number,
+    unique:true
+  },
   "Tran. Date": String,
   "Tran. Time": Number,
   TTNO: String,

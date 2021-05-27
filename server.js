@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const XLSX = require("xlsx");
-
+const { uid } = require("uid");
 require("dotenv").config();
 //* Modals
 const Dealer = require("./Modals/Dealer.modal");
@@ -62,6 +62,7 @@ app.post("/upload", async (req, res) => {
    Order.insertMany(orders);
    
   const dealers = await Dealer.find();
+  const dealersInfo = {};
   dealers.map(async (dealer,i) => {
     
     const dOrder = orders.filter(order => {
@@ -75,14 +76,17 @@ app.post("/upload", async (req, res) => {
            "Tran. Date": order["Tran. Date"],
            Name: order.Name,
            "Bill Qty": order["Bill Qty"],
-            email:dealer.email
+           email:dealer.email
          };
        });
+       dealersInfo[dealer.name] = {
+         ...dealer._doc,
+         order: dOrder.length
+       }
     
-   
   });
   
-  res.json({ dealerOrder});
+  res.json({ dealerOrder,dealersInfo});
 });
 app.get("/dealers", allDealers)
 app.post("/dealers/update", updateDealers)
@@ -105,6 +109,27 @@ app.delete("/dealers/:id", async (req, res) => {
   } catch (error) {
     res.sendStatus(500)
   }
+})
+app.get("/orders", async (req, res) => {
+  const ordersQ =await Order.find(
+    {},
+    {
+      TTNO:true,
+      "Tran. Date": true,
+      Name: true,
+      "Bill Qty": true,
+    }
+  );
+  const orders = ordersQ.map(order => {
+    return {
+      id:uid(),
+      TTNO: order.TTNO,
+      "Tran. Date": order.Tran[' Date'],
+      Name: order.Name,
+      "Bill Qty": order["Bill Qty"]
+    }
+  })
+  res.json(orders)
 })
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
