@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 const orderSchema = mongoose.Schema({
   "Order No": Number,
-  "Doc. No": {
+  date: Date,
+  id: {
     type: Number,
-    unique:true
+    unique: true
   },
-  "Tran. Date": String,
   "Tran. Time": Number,
   TTNO: String,
   Material: Number,

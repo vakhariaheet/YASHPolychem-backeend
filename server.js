@@ -12,6 +12,7 @@ const Order = require("./Modals/Order.modal");
 
 const allDealers = require('./Routes/allDealers.routes');
 const updateDealers = require('./Routes/updateDealers.routes');
+const report = require('./Routes/report.routes');
 const app = express();
 
 app.use(cors());
@@ -23,6 +24,10 @@ mongoose.connect(process.env.MONGODB_URL, {
   useCreateIndex: true,
   useFindAndModify: false,
 });
+const convertToDate = (date) => {
+  const [day, month, year] = date.split(".");
+  return `${year}-${month}-${day}`;
+};
 app.post("/upload", async (req, res) => {
   const { binaryString } = req.body;
   const workbook = XLSX.read(binaryString, { type: "binary" });
@@ -34,9 +39,7 @@ app.post("/upload", async (req, res) => {
   json.map((dat) => {
     const orderProperty = [
       "Order No",
-      "Doc. No",
       "Tran. Date",
-      "Tran. Time",
       "TTNO",
       "Material",
       "Material Name",
@@ -56,10 +59,20 @@ app.post("/upload", async (req, res) => {
     orderProperty.map((orderName) => {
       order[orderName] = dat[orderName];
     });
+    order.date = convertToDate(dat["Tran. Date"])
+    order.id = dat["Doc. No"];
     orders.push(order);
   });
-
-   Order.insertMany(orders);
+  try {
+  const t =  await Order.insertMany(orders, {
+     ordered:false,
+  });
+    
+  }
+  catch (err) {
+    console.log(err.message);
+  }
+  
    
   const dealers = await Dealer.find();
   const dealersInfo = {};
@@ -73,10 +86,10 @@ app.post("/upload", async (req, res) => {
        dealerOrder[dealer.name] = dOrder.map((order) => {
          return {
            TTNO: order.TTNO,
-           "Tran. Date": order["Tran. Date"],
+           "Tran. Date": order.date,
            Name: order.Name,
            "Bill Qty": order["Bill Qty"],
-           email:dealer.email
+           email: dealer.email,
          };
        });
        dealersInfo[dealer.name] = {
@@ -110,28 +123,31 @@ app.delete("/dealers/:id", async (req, res) => {
     res.sendStatus(500)
   }
 })
+app.get("/report", report)
 app.get("/orders", async (req, res) => {
   const ordersQ =await Order.find(
     {},
     {
       TTNO:true,
-      "Tran. Date": true,
+      date: true,
       Name: true,
       "Bill Qty": true,
+      id:true
     }
   );
   const orders = ordersQ.map(order => {
+    const date = new Date(order.date)
     return {
-      id:uid(),
+      id: order.id,
       TTNO: order.TTNO,
-      "Tran. Date": order.Tran[' Date'],
+      "Tran. Date": `${date.getDate()}-${date.getMonth() + 1 }-${date.getFullYear()}`,
       Name: order.Name,
-      "Bill Qty": order["Bill Qty"]
-    }
+      "Bill Qty": order["Bill Qty"],
+    };
   })
   res.json(orders)
 })
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5005;
 app.listen(port, () => {
   console.log("listening on port " + port);
 });
