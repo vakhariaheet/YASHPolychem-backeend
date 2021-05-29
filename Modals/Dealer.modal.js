@@ -2,7 +2,10 @@ const mongoose = require("mongoose");
 const dealerSchema = mongoose.Schema({
     name: String,
     email: String,
-    id: String
+    id: {
+        type: Number,
+        unique: true,
+    }
 });
 
 module.exports = mongoose.model("dealer", dealerSchema);

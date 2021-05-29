@@ -64,13 +64,10 @@ app.post("/upload", async (req, res) => {
     orders.push(order);
   });
   try {
-  const t =  await Order.insertMany(orders, {
-     ordered:false,
-  });
-    
+    await Order.insertMany(orders);
   }
   catch (err) {
-    console.log(err.message);
+   return res.status(500).json({err});
   }
   
    
@@ -83,13 +80,14 @@ app.post("/upload", async (req, res) => {
       return order["Ship to Party"] == dealer.id
     });
     
-       dealerOrder[dealer.name] = dOrder.map((order) => {
+    dealerOrder[dealer.name] = dOrder.map((order) => {
+         const date = new Date(order.date)
          return {
            TTNO: order.TTNO,
-           "Tran. Date": order.date,
+           date: `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`,
            Name: order.Name,
            "Bill Qty": order["Bill Qty"],
-           email: dealer.email,
+           id:order.id
          };
        });
        dealersInfo[dealer.name] = {
@@ -111,7 +109,12 @@ app.get("/dealers/:id",async (req,res) => {
 app.post("/add/dealer", async (req, res) => {
   const { dealer } = req.body;
   
-  const newDealer = await Dealer.create(dealer);
+  try {
+    await Dealer.create(dealer);
+  }
+  catch (err) {
+   return res.status(500).json({ err });
+  }
   res.sendStatus(200);
 })
 app.delete("/dealers/:id", async (req, res) => {
@@ -125,27 +128,41 @@ app.delete("/dealers/:id", async (req, res) => {
 })
 app.get("/report", report)
 app.get("/orders", async (req, res) => {
-  const ordersQ =await Order.find(
-    {},
+
+  const { lt, gt } = req.query;
+  let lowerDate = lt;
+  let upperDate = gt;
+  const todayDate = new Date();
+  const date = todayDate.getDate();
+  const month = todayDate.getMonth() + 1;
+  const year = todayDate.getFullYear();
+  if (!lowerDate && !upperDate) {
+    lowerDate = `${year}-${month}-01`;
+    upperDate = `${year}-${month}-${date}`;
+  }
+  if (!lowerDate) {
+    lowerDate = `${year}-${month}-01`;
+  }
+  if (!upperDate) {
+    upperDate = `${year}-${month}-${date}`;
+  }
+  
+  const orders = await Order.find(
     {
-      TTNO:true,
+      date: {
+        $gte: lowerDate,
+        $lte: upperDate,
+      },
+    },
+    {
+      TTNO: true,
       date: true,
       Name: true,
       "Bill Qty": true,
-      id:true
+      id: true,
     }
-  );
-  const orders = ordersQ.map(order => {
-    const date = new Date(order.date)
-    return {
-      id: order.id,
-      TTNO: order.TTNO,
-      "Tran. Date": `${date.getDate()}-${date.getMonth() + 1 }-${date.getFullYear()}`,
-      Name: order.Name,
-      "Bill Qty": order["Bill Qty"],
-    };
-  })
-  res.json(orders)
+  ).sort({ date: 1 });
+  res.json({orders,upperDate,lowerDate})
 })
 const port = process.env.PORT || 5005;
 app.listen(port, () => {

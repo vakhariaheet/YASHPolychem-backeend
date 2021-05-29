@@ -49,7 +49,9 @@ const report = async (req, res) => {
         id: true,
       }
     );
-    const tOrders = {};
+  const tOrders = {};
+  const dealerInfo = {};
+  
   dealer.forEach((dealer) => {
       const dOrders = ordersQ.filter((order) => order.Name === dealer.name);
       let num = 0;
