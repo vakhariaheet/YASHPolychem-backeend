@@ -6,7 +6,7 @@ const orderSchema = mongoose.Schema({
     type: Number,
     unique: true
   },
-  "Tran. Time": Number,
+  time: String,
   TTNO: String,
   Material: Number,
   "Material Name": String,

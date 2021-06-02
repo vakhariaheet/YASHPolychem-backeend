@@ -1,13 +1,19 @@
 const Order = require("../Modals/Order.modal");
 const Dealer = require("../Modals/Dealer.modal");
 const report = async (req, res) => {
-  const { lt, gt } = req.query;
+  const { lt, gt, cd } = req.query;
   let lowerDate = lt;
   let upperDate = gt;
   const todayDate = new Date();
   const date = todayDate.getDate();
   const month = todayDate.getMonth() + 1;
   const year = todayDate.getFullYear();
+  let reqDate = `${year}-${month}-${date}`;
+  console.log(req.query);
+  if (cd) {
+    const date = new Date(cd);
+    reqDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  }
   if (!lowerDate && !upperDate) {
     lowerDate = `${year}-${month}-01`;
     upperDate = `${year}-${month}-${date}`;
@@ -18,6 +24,7 @@ const report = async (req, res) => {
   if (!upperDate) {
     upperDate = `${year}-${month}-${date}`;
   }
+
   const ordersQ = await Order.find(
     {
       date: {
@@ -35,30 +42,32 @@ const report = async (req, res) => {
   ).sort({ date: 1 });
   const dealer = await Dealer.find({});
   const orders = {};
-    const OrdersQ = await Order.find(
-      {
-        date: {
-          $gte: `${year}-${month}-${date}`,
-        },
+  console.log(reqDate);
+  const reqDateArr = reqDate.split("-");
+  const OrdersQ = await Order.find(
+    {
+      date: {
+        $gte: reqDate,
+        $lt: `${Number(reqDateArr[0])}-${reqDateArr[1]}-${Number(reqDateArr[2]) +1}`,
       },
-      {
-        TTNO: true,
-        date: true,
-        Name: true,
-        "Bill Qty": true,
-        id: true,
-      }
-    );
+    },
+    {
+      TTNO: true,
+      date: true,
+      Name: true,
+      "Bill Qty": true,
+      id: true,
+    }
+  );
   const tOrders = {};
   const dealerInfo = {};
-  
   dealer.forEach((dealer) => {
-      const dOrders = ordersQ.filter((order) => order.Name === dealer.name);
-      let num = 0;
-      OrdersQ.filter((order) => order.Name === dealer.name).map(order => {
-        return (num += Number(order["Bill Qty"]));
-      })
-      if (dOrders.length === 0) return;
+    const dOrders = ordersQ.filter((order) => order.Name === dealer.name);
+    let num = 0;
+    OrdersQ.filter((order) => order.Name === dealer.name).map((order) => {
+      return (num += Number(order["Bill Qty"]));
+    });
+    if (dOrders.length === 0) return;
     orders[dealer.name] = dOrders.map((order) => {
       return {
         TTNO: order.TTNO,
@@ -68,11 +77,11 @@ const report = async (req, res) => {
         id: order.id,
       };
     });
-      
-    tOrders[dealer.name] = num
+
+    tOrders[dealer.name] = num.toFixed(3);
   });
 
-  res.json({ orders, lowerDate, upperDate,tOrders });
+  res.json({ orders, lowerDate, upperDate, tOrders, reqDate, OrdersQ });
 };
 
 module.exports = report;

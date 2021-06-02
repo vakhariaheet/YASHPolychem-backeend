@@ -28,6 +28,11 @@ const convertToDate = (date) => {
   const [day, month, year] = date.split(".");
   return `${year}-${month}-${day}`;
 };
+app.get("/lastupdated",async (req, res) => {
+  const date = await Order.find({}, { created_on: true, _id: false }).sort({ created_on: 'desc' }).limit(1);
+  console.log(date);
+  res.json({last_updated: date[0].created_on})
+})
 app.post("/upload", async (req, res) => {
   const { binaryString } = req.body;
   const workbook = XLSX.read(binaryString, { type: "binary" });
@@ -40,6 +45,7 @@ app.post("/upload", async (req, res) => {
     const orderProperty = [
       "Order No",
       "Tran. Date",
+     "Tran. Time",
       "TTNO",
       "Material",
       "Material Name",
@@ -59,7 +65,10 @@ app.post("/upload", async (req, res) => {
     orderProperty.map((orderName) => {
       order[orderName] = dat[orderName];
     });
-    order.date = convertToDate(dat["Tran. Date"])
+    
+    order.date = convertToDate(dat["Tran. Date"]);
+    order.time =dat["Tran. Time"];
+    
     order.id = dat["Doc. No"];
     orders.push(order);
   });
@@ -94,9 +103,7 @@ app.post("/upload", async (req, res) => {
          ...dealer._doc,
          order: dOrder.length
        }
-    
   });
-  
   res.json({ dealerOrder,dealersInfo});
 });
 app.get("/dealers", allDealers)
