@@ -9,7 +9,7 @@ const report = async (req, res) => {
   const month = todayDate.getMonth() + 1;
   const year = todayDate.getFullYear();
   let reqDate = `${year}-${month}-${date}`;
-  console.log(req.query);
+  
   if (cd) {
     const date = new Date(cd);
     reqDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -42,7 +42,7 @@ const report = async (req, res) => {
   ).sort({ date: 1 });
   const dealer = await Dealer.find({});
   const orders = {};
-  console.log(reqDate);
+
   const reqDateArr = reqDate.split("-");
   const OrdersQ = await Order.find(
     {

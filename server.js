@@ -30,7 +30,6 @@ const convertToDate = (date) => {
 };
 app.get("/lastupdated",async (req, res) => {
   const date = await Order.find({}, { created_on: true, _id: false }).sort({ created_on: 'desc' }).limit(1);
-  console.log(date);
   res.json({last_updated: date[0].created_on})
 })
 app.post("/upload", async (req, res) => {
@@ -110,8 +109,8 @@ app.get("/dealers", allDealers)
 app.post("/dealers/update", updateDealers)
 app.get("/dealers/:id",async (req,res) => {
   const { id } = req.params;
-  const dealer = await Dealer.find({ id });
-  res.json(dealer[0]);
+  const dealer = await Dealer.findById(id);
+  res.json(dealer);
 })
 app.post("/add/dealer", async (req, res) => {
   const { dealer } = req.body;
